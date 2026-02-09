@@ -34,6 +34,7 @@ jobs:
       - name: Build
         uses: gradle/gradle-build-action@v2
         with:
+          gradle-version: '8.5'
           arguments: clean build --no-daemon
 
       - name: Create Draft Release and upload artifacts

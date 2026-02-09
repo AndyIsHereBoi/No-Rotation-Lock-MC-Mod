@@ -37,12 +37,21 @@ jobs:
           gradle-version: '8.5'
           arguments: clean build --no-daemon
 
-      - name: Create Draft Release and upload artifacts
-        uses: ncipollo/release-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
+          name: release-artifacts
+          path: build/libs/*.jar
+
+      - name: Create Draft Release from artifacts
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.RELEASE_TOKEN != '' && secrets.RELEASE_TOKEN || github.token }}
           tag: ${{ github.event.inputs.tag || github.ref_name }}
           name: ${{ github.event.inputs.tag || github.ref_name }}
           draft: true
-          files: build/libs/*.jar
+          artifacts: release-artifacts
+
+      # Note: If this step fails with a 403, create a Personal Access Token with 'repo' scope
+      # and add it to repository secrets as 'RELEASE_TOKEN'. The workflow will automatically
+      # use that token when available.

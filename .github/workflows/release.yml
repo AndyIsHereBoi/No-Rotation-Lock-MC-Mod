@@ -40,21 +40,53 @@ jobs:
           gradle-version: '8.5'
           arguments: clean build --no-daemon
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts
-          path: build/libs/*.jar
+      - name: Create checksums for build artifacts
+        run: |
+          set -e
+          shopt -s nullglob
+          files=(build/libs/*.jar)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No jars found in build/libs"
+            echo "" > checksums.txt
+          else
+            > checksums.txt
+            for f in "${files[@]}"; do
+              sha256sum "$f" >> checksums.txt
+            done
+          fi
 
-      - name: Create Draft Release from artifacts
-        uses: ncipollo/release-action@v1
+      - name: Create Draft Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
         with:
-          token: ${{ secrets.RELEASE_TOKEN || github.token }}
-          tag: ${{ github.event.inputs.tag || github.ref_name }}
-          name: ${{ github.event.inputs.tag || github.ref_name }}
           draft: true
-          artifacts: release-artifacts
+          prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
+          name: ${{ github.event.inputs.tag || github.ref_name }}
 
-      # Note: If this step fails with a 403, create a Personal Access Token with 'repo' scope
-      # and add it to repository secrets as 'RELEASE_TOKEN'. The workflow will automatically
-      # use that token when available.
+      - name: Upload release assets (jars & checksums)
+        env:
+          UPLOAD_URL: ${{ steps.create_release.outputs.upload_url }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        run: |
+          set -e
+          # remove the template suffix like {?name,label}
+          UPLOAD_URL="${UPLOAD_URL%\{*}"
+          shopt -s nullglob
+          files=(build/libs/*.jar)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No jars to upload"
+          else
+            for f in "${files[@]}"; do
+              echo "Uploading $f"
+              curl -sS -XPOST -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/java-archive" --data-binary @"$f" "${UPLOAD_URL}?name=$(basename "$f")"
+            done
+          fi
+          if [ -f checksums.txt ]; then
+            echo "Uploading checksums.txt"
+            curl -sS -XPOST -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: text/plain" --data-binary @checksums.txt "${UPLOAD_URL}?name=checksums.txt"
+          fi
+
+      # Note: If the release creation returns 403, add a Personal Access Token with 'repo' scope
+      # to repository secrets as 'RELEASE_TOKEN' and re-run the workflow.

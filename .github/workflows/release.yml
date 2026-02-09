@@ -32,7 +32,9 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: clean build --no-daemon
 
       - name: Create Draft Release and upload artifacts
         uses: ncipollo/release-action@v1

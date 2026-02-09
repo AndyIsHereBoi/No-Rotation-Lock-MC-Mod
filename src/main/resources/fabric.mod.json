@@ -1,0 +1,25 @@
+{
+    "schemaVersion": 1,
+    "id": "no-rotation-lock",
+    "version": "${version}",
+    "name": "No Rotation Lock",
+    "description": "Removes the head rotation lock when riding any entity, allowing full 360 degree camera rotation.",
+    "authors": [
+        "You"
+    ],
+    "contact": {},
+    "license": "MIT",
+    "environment": "client",
+    "entrypoints": {
+        "client": [
+            "com.norotationlock.NoRotationLockMod"
+        ]
+    },
+    "mixins": [
+        "no-rotation-lock.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": ">=0.14.0",
+        "minecraft": "~1.19"
+    }
+}

@@ -57,10 +57,11 @@ jobs:
 
       - name: Create Draft Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           draft: true
           prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
           name: ${{ github.event.inputs.tag || github.ref_name }}
@@ -68,7 +69,7 @@ jobs:
       - name: Upload release assets (jars & checksums)
         env:
           UPLOAD_URL: ${{ steps.create_release.outputs.upload_url }}
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -e
           # remove the template suffix like {?name,label}
@@ -87,6 +88,3 @@ jobs:
             echo "Uploading checksums.txt"
             curl -sS -XPOST -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: text/plain" --data-binary @checksums.txt "${UPLOAD_URL}?name=checksums.txt"
           fi
-
-      # Note: If the release creation returns 403, add a Personal Access Token with 'repo' scope
-      # to repository secrets as 'RELEASE_TOKEN' and re-run the workflow.

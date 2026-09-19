@@ -3,7 +3,7 @@ package com.norotationlock;
 import com.norotationlock.compat.SmoothCoastersCompat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public class NoRotationLockMod implements ClientModInitializer {
 
@@ -13,9 +13,9 @@ public class NoRotationLockMod implements ClientModInitializer {
     public void onInitializeClient() {
         // Monitor the player's mount state and toggle SmoothCoasters rotation limits
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            MinecraftClient mc = client;
+            Minecraft mc = client;
             if (mc.player == null) return;
-            boolean isRiding = mc.player.hasVehicle();
+            boolean isRiding = mc.player.isPassenger();
             if (isRiding) {
                 // Ensure limits are disabled while riding (call every tick to defeat updates)
                 SmoothCoastersCompat.setUnlimitedRotation(true);

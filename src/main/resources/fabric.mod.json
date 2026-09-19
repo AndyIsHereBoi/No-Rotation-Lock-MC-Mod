@@ -19,8 +19,9 @@
         "no-rotation-lock.mixins.json"
     ],
     "depends": {
-        "fabricloader": ">=0.14.0",
-        "fabric": "*",
-        "minecraft": ">=1.18 <1.21"
+        "fabricloader": ">=0.19.5",
+        "fabric-api": "*",
+        "minecraft": "~26.1",
+        "java": ">=25"
     }
 }
